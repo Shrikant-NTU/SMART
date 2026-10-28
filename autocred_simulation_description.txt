@@ -1,0 +1,144 @@
+Simulation description: supermarket pedestrian service and checkout scenario
+
+This simulation represents pedestrian movement inside and around a supermarket-like
+environment using a Social Force Model style crowd dynamics implementation.
+The scenario is designed to test whether pedestrian agents can complete a
+multi-stage shopping route while maintaining physically and socially plausible
+motion in a constrained indoor layout.
+
+Overall scenario objective
+
+Pedestrians must enter the supermarket, travel to a preassigned service or item
+collection point, wait briefly to represent item pickup/service, proceed to a
+checkout area, and then leave the store through an exit. A credible simulation
+should show pedestrians completing this route efficiently while preserving
+realistic local interactions, smooth goal-directed motion, and reasonable
+clearance from other pedestrians, racks, walls, and gate boundaries.
+
+Environment and layout
+
+The environment is a two-dimensional supermarket floor plan. The floor contains
+walkable areas, static obstacles, rack-like blocked regions, entry/exit gates,
+orange gate/transition regions, checkout/service locations, and boundary walls.
+Pedestrians are not expected to move through blocked obstacle regions or outside
+the valid store layout. The route planner provides waypoint sequences through
+walkable space, and the Social Force Model controls continuous pedestrian
+motion between those waypoints.
+
+Pedestrian agents
+
+Each pedestrian is modeled as a circular body with a physical radius, position,
+velocity, desired speed, relaxation time, current target waypoint, and final
+route objective. Pedestrians may start inside the store at different shopping
+stages or outside the store waiting to enter. Outside pedestrians enter according
+to staggered entry times. Once active, each pedestrian should move toward the
+current route waypoint, update to the next waypoint when the current target is
+reached or passed, and eventually leave through a valid exit.
+
+Route and task sequence
+
+Each pedestrian has a preassigned service point. The intended task sequence is:
+
+1. Enter the supermarket through a valid entry gate if the pedestrian starts
+   outside.
+2. Move through the walkable route network toward the assigned service or item
+   collection point.
+3. Pause briefly at the service point to represent collecting the item.
+4. Continue toward the checkout portion of the route.
+5. Move from checkout toward the exit route.
+6. Leave the store through a valid exit after completing the required route
+   sequence.
+
+The scenario should not be judged only by whether pedestrians eventually leave.
+The credibility of the path taken matters. A pedestrian that reaches the exit
+by cutting through racks, bypassing checkout, teleporting, oscillating
+unnaturally, or using physically implausible movement should be considered less
+credible even if aggregate completion metrics look good.
+
+Social Force Model expectations
+
+Pedestrian motion should be explainable by the modeled Social Force components:
+driving acceleration toward the current goal or waypoint, social repulsion from
+nearby pedestrians, and obstacle/wall repulsion from static geometry. The
+observed acceleration should generally agree with the acceleration predicted by
+these modeled components, except during explicitly defined discrete events such
+as spawning, route stage changes, waiting at service, boundary correction, or
+leaving the environment.
+
+Expected credible behaviour
+
+A credible run should exhibit the following behaviours:
+
+- Pedestrians generally move toward their current waypoint and make steady
+  progress through the intended entry-service-checkout-exit sequence.
+- Trajectories are smooth at the simulation time scale, without sudden jumps,
+  unrealistic velocity reversals, high-frequency jitter, or repeated stop-start
+  oscillation that is not caused by congestion or service waiting.
+- Speeds remain in a plausible pedestrian range and are consistent with the
+  sampled desired-speed distribution and maximum-speed limits.
+- Accelerations remain physically plausible and are mostly explained by the
+  Social Force acceleration components recorded in the time-series data.
+- Pedestrians maintain personal space when possible and begin avoidance before
+  severe body overlap occurs.
+- Short interactions in crowded or narrow regions may occur, but sustained
+  overlap, deep overlap, and long periods of body interpenetration indicate
+  poor credibility.
+- Agents avoid static obstacles, rack regions, walls, and invalid areas rather
+  than passing through them.
+- Congestion near gates, service points, or checkout may slow movement, but it
+  should not produce nonphysical escape behaviour, indefinite trapping, or
+  large unexplained acceleration spikes.
+- Pedestrians that are waiting at service points should remain locally stable
+  instead of drifting, vibrating, or pushing through other agents.
+- Exiting pedestrians should disappear or become inactive only after completing
+  the intended route sequence and reaching a valid exit region.
+
+Expected problematic behaviour
+
+The following patterns should reduce plausibility:
+
+- Pedestrians reach the final goal while skipping the assigned service point or
+  checkout sequence.
+- Pedestrians move away from their current goal for long periods without a
+  clear interaction or recovery reason.
+- Agents pass through racks, walls, obstacles, or non-walkable layout regions.
+- Overlap metrics improve only because pedestrians are pushed unnaturally far
+  away from one another, freeze, or avoid entering the store.
+- Pedestrians exhibit extreme acceleration, abrupt direction changes, visible
+  jitter, or velocity clipping artifacts not explained by the SFM terms.
+- The SFM residual is large for many active agents during ordinary movement,
+  meaning observed acceleration is not explained by the recorded driving,
+  social, and obstacle components.
+- Nearest-neighbor distances collapse repeatedly in crowded regions without
+  anticipatory slowing or steering.
+- Time-to-collision is frequently small while social repulsion remains weak or
+  while agents continue accelerating into one another.
+- Boundary correction or route recovery dominates the motion rather than acting
+  as an occasional safeguard.
+- High goal reach rate is achieved by behaviour that violates the conceptual
+  shopping route or the physical layout.
+
+Credibility assessment focus
+
+You should judge this scenario using the time-series data and generated
+plots with emphasis on both task success and mechanism plausibility. The
+important question is not only whether numerical target metrics improve, but
+whether the movement remains credible for a Social Force Model of pedestrians
+performing a supermarket entry, service, checkout, and exit task.
+
+The most important evidence should include:
+
+- Progress through the route over time.
+- Position and trajectory patterns in relation to goals and obstacles.
+- Speed and acceleration distributions over time.
+- Agreement between observed acceleration and SFM-predicted acceleration.
+- Personal-space, nearest-neighbor, overlap-depth, and time-to-collision
+  patterns.
+- Differences between normal movement and explicit event states such as
+  inactive, spawned, active, waiting, route_recovery, boundary_clipped, and
+  reached_goal.
+
+A candidate model should be considered plausible only if it improves or
+preserves task performance while remaining consistent with the intended Social
+Force Model mechanisms, the supermarket task sequence, and the physical
+constraints of the environment.

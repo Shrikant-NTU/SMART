@@ -1,0 +1,236 @@
+openai_model: "gpt-5-mini"
+openai_image_detail: "low"
+codex_model: "gpt-5.6-terra"
+reasoning_backend: "openai_api"
+diagnosis_parallel_workers: 4
+code_edit_backend: "codex_cli"
+# Backward-compatible fallback. Prefer reasoning_backend for new runs.
+llm_backend: "openai_api"
+max_iterations: 2
+timeout_seconds: 3600
+automatic_patch_approval: true
+enable_video_analysis: true
+video_frame_mode: "target_video_seconds"
+target_video_seconds_frame_fraction: 0.5
+max_video_frames: 6
+send_video_frames_to_llm: true
+max_code_chars_for_llm: 0  # 0 means send complete tracked files.
+context_compaction:
+  enabled: true
+  model: "gpt-5"
+  chunk_max_chars: 60000
+  chunk_summary_max_chars: 2500
+  iteration_summary_max_chars: 6000
+  rolling_summary_max_chars: 15000
+  exact_facts_max_chars: 5000
+complexity_line_limit_increase: 80
+metric_decimal_places: 2
+terminal_verbosity: "concise"  # Use "detailed" for every controller/GA/Codex checkpoint.
+terminal_progress_interval_seconds: 120
+terminal_ga_generation_interval: 5
+
+source_project_dir: "../Test-new"
+python_executable: "/data/Code based/test/bin/python"
+runner_script_name: "run_examples.py"
+model_file_name: "jsfm/sfm.py"
+example_glob: "example*.py"
+additional_tracked_globs: ["jsfm/*.py"]
+candidate_workspace_directories: ["jsfm"]
+candidate_workspace_files: ["calibration_parameters.yaml"]
+line_count_files: ["jsfm/sfm.py", "example1.py", "example2.py", "example8.py", "example9.py", "example10.py"]
+validation_imports: ["jsfm.sfm"]
+example_numbers: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+missing_example_policy: "skip"
+output_dir_name: ".images"
+output_video_glob: "*.mp4"
+output_image_glob: "*.png"
+trajectory_file_name: "trajectories.csv"
+outputs_cleanup:
+  delete_non_active_after_archive: true
+  compact_active_after_autocred: true
+  keep_mp4: true
+  keep_large_png: false
+  keep_extracted_frames: true
+  keep_logs: false
+  keep_metrics: true
+headless_matplotlib: true
+copy_exclude_names: [".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".images", "calibration", "Old experiments"]
+copy_exclude_patterns: ["*.zip", "*.pdf"]
+
+codex_cli:
+  command: "/usr/local/bin/codex-vscode"
+  parallel_workers: 4
+  sandbox: "workspace-write"
+  approval_policy: "never"
+  skip_git_repo_check: true
+  edit_timeout_seconds: 3600
+  extra_args:
+    - "--config"
+    - 'model_reasoning_effort="medium"'
+
+acceptance:
+  complexity_files: ["jsfm/sfm.py"]
+
+# Main-experiment software complexity starts at the active per-agent state update.
+software_complexity:
+  start_path: "jsfm/sfm.py"
+  start_function: "single_update_active"
+
+# Exact scientist-prescribed equations checked against source_project_dir.
+prescribed_state_update_lock:
+  enabled: true
+  protected_functions:
+    - "clip_velocity"
+    - "preferred_velocity"
+    - "actual_velocity"
+    - "updated_velocity_state"
+  update_function: "single_update_active"
+  active_body_function: "update_active_human"
+  protected_assignments:
+    - "self_state"
+    - "preferred"
+    - "actual"
+    - "updated_preferred"
+    - "max_speed"
+    - "updated_actual"
+    - "updated_position"
+  protect_active_body_returns: true
+  protect_update_function_returns: true
+
+# Legacy causal-graph analyzer settings retained for standalone historical tools.
+causal_complexity:
+  exclude_function_patterns:
+    - "save_*"
+    - "draw_*"
+    - "plot_*"
+    - "render_*"
+  exclude_variables:
+    - "np"
+    - "jnp"
+    - "jax"
+    - "lax"
+    - "plt"
+    - "matplotlib"
+    - "os"
+    - "time"
+    - "json"
+    - "Path"
+    - "FuncAnimation"
+    - "FFMpegWriter"
+    - "figure"
+    - "fig"
+    - "ax"
+    - "animation"
+    - "output_path"
+    - "image_dir"
+  # Paper-aligned semantic exclusions. Exact names and shell-style patterns are supported.
+  exclude_variable_roles:
+    exogenous: []
+    initial_conditions: []
+    summary: []
+
+metric_aggregation:
+  reached_pedestrian_count:
+    method: "sum"
+  total_pedestrians:
+    method: "sum"
+  goal_reach_rate:
+    method: "ratio"
+    numerator: "reached_pedestrian_count"
+    denominator: "total_pedestrians"
+  completion_time:
+    method: "weighted_mean"
+    weight: "reached_pedestrian_count"
+  average_completion_time:
+    method: "weighted_mean"
+    weight: "reached_pedestrian_count"
+  average_speed:
+    method: "weighted_mean"
+    weight: "total_pedestrians"
+  total_distance_traveled:
+    method: "sum"
+  average_distance_traveled:
+    method: "weighted_mean"
+    weight: "total_pedestrians"
+  stuck_pedestrian_count:
+    method: "sum"
+  unique_overlap_count:
+    method: "sum"
+  overlap_episode_count:
+    method: "sum"
+  total_overlap_duration_seconds:
+    method: "sum"
+  average_overlap_duration_seconds:
+    method: "weighted_mean"
+    weight: "overlap_episode_count"
+    default: 0.0
+  average_overlap_duration_per_pair_seconds:
+    method: "weighted_mean"
+    weight: "unique_overlap_count"
+    default: 0.0
+  overlap_count:
+    method: "sum"
+  execution_time_seconds:
+    method: "sum"
+
+calibration:
+  max_active_parameters: null
+  max_new_parameters_per_candidate: 3
+  seed: 77
+  repeat_count: 1
+  repeat_seeds: [101]
+  initial_population_size: 100
+  working_population_size: 30
+  generations: 10
+  crossover_probability: 0.80
+  mutation_probability: 0.15
+  parallel_workers: "all"
+  max_average_overlap_duration_seconds: 8.0
+  max_feasibility_evaluation_multiplier: 10
+  max_feasibility_replacements_total: 50
+  parameter_file: "jsfm/utils.py"
+  save_media: false
+  cleanup_after_success: true
+  cleanup_scratch_workspaces: true
+  promoted_workspace_dir: "model_store"
+  topsis_weights:
+    goal_reach_rate: 0.25
+    average_completion_time: 0.25
+    average_overlap_duration_seconds: 0.50
+  parameter_mutation_sizes:
+    tau: 0.15
+    Ai: 0.24
+    Bi: 0.075
+  parameter_ranges:
+    tau:
+      min: 0.2
+      max: 1.2
+      default: 0.5
+    Ai:
+      min: 1.9
+      max: 4.0
+      default: 2.1
+    Bi:
+      min: 0.1
+      max: 0.6
+      default: 0.3
+autocred:
+  enabled: true
+  mode: "code_video"
+  model: "gpt-5-mini"
+  parallel_workers: 4
+  plausibility_threshold: 0.75
+  max_replacement_attempts: 3
+  num_graphs: 6
+  num_indicators: 4
+  max_sample_rows: 250
+  timeseries_file_name: "trajectories.csv"
+  run_column: null
+  parameter_columns: []
+  state_dir: "history/autocrd"
+  run_face_validation: true
+  simulation_description_file: "autocred_simulation_description.txt"
+  simulation_description: null
+history:
+  keep_full_workspace_snapshots: false
+  save_prompts_and_responses: true
